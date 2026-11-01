@@ -2542,8 +2542,7 @@ Container с данными “box” и ребёнком $child в месте v
 автоматического переноса совпавших узлов и не меняет обработку данных по
 умолчанию. Сочетание позиционного и именованного списков остаётся
 запрещено D379.</p>
-<p>Частичная продукция EBNF для конструктора результата (не полная
-грамматика Q06):</p>
+<p>Продукция конструктора результата (единая грамматика — §13.3):</p>
 <pre class="ebnf"><code>node-construction = type-name, [ result-data ], [ result-children ];
 result-children = positional-result-children | named-result-children ;</code></pre>
 <p>Здесь result-data содержит одно строковое выражение по правилам
@@ -2839,8 +2838,8 @@ Comment+ -&gt; none;</code></pre>
 </tbody>
 </table>
 <p>Строки таблицы описывают согласованные сочетания. Сложные сочетания
-захватов следует писать с явными скобками; оставшиеся лексические
-вопросы перечислены в §18.</p>
+захватов следует писать с явными скобками; единая грамматика приведена в
+§13.3.</p>
 <table>
 <colgroup>
 <col style="width: 33%" />
@@ -3086,6 +3085,624 @@ Identifier&lt;(startsWith(&quot;get&quot;) | startsWith(&quot;set&quot;)) &amp; 
 имеют одинаковый относительный приоритет в данных и шаблонах, но
 оперируют разными сущностями. Используются одинарные <code>&amp;</code>
 и <code>|</code>; двойные формы не входят в язык.</p>
+<p><a id="s13-3"></a></p>
+<h3 id="сводная-ebnf-таблица-вызовов-и-контрольные-примеры-14">13.3.
+Сводная EBNF, таблица вызовов и контрольные примеры (#14)</h3>
+<p>Это редакционная сводка принятых правил спецификации и D378–D414, а
+не новые решения языка и не описание реализации старого компилятора.
+Семантические ограничения действуют поверх EBNF. Включения Java остаются
+строками; их содержимое проверяет Java-компилятор.</p>
+<h4 id="лексический-слой">13.3.1. Лексический слой</h4>
+<p>EBNF использует <code>,</code> для последовательности, <code>|</code>
+для выбора, <code>[...]</code> для необязательности и <code>{...}</code>
+для повторения. Терминалы заключены в кавычки. <code>identifier</code>,
+<code>type-name</code>, <code>capture</code>, <code>integer</code>,
+<code>string</code>, <code>character</code>, <code>range</code> — целые
+токены, определённые ниже; пробелы внутри них не вставляются.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Токен / правило</th>
+<th>Форма и ограничения</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>identifier</code></td>
+<td><code>[A-Za-z_][A-Za-z0-9_]*</code>, кроме восьми ключевых слов и
+отдельного <code>_</code></td>
+</tr>
+<tr class="even">
+<td><code>type-name</code></td>
+<td><code>[A-Z][A-Za-z0-9_]*</code>, имя типа узла</td>
+</tr>
+<tr class="odd">
+<td><code>capture</code></td>
+<td><code>$</code> непосредственно перед допустимым
+<code>identifier</code>; <code>$ text</code> и <code>$/**/text</code>
+ошибочны</td>
+</tr>
+<tr class="even">
+<td><code>integer</code></td>
+<td><code>[0-9]+</code>; ведущие нули допустимы, основание 10; знак —
+отдельный оператор</td>
+</tr>
+<tr class="odd">
+<td>Булевы литералы</td>
+<td>Только <code>true</code> и <code>false</code></td>
+</tr>
+<tr class="even">
+<td>Ключевые слова</td>
+<td><code>abstract</code>, <code>node</code>, <code>datatype</code>,
+<code>include</code>, <code>as</code>, <code>none</code>,
+<code>true</code>, <code>false</code></td>
+</tr>
+<tr class="odd">
+<td>Контекстные имена</td>
+<td>Имена параметров данных и встроенных вызовов не резервируются
+глобально</td>
+</tr>
+<tr class="even">
+<td><code>string</code></td>
+<td>Двойные кавычки; содержимое и escape по §2.4 спецификации</td>
+</tr>
+<tr class="odd">
+<td><code>character</code></td>
+<td>Одинарные кавычки, внутри ровно одно скалярное значение после
+декодирования (§9.3)</td>
+</tr>
+<tr class="even">
+<td><code>range</code></td>
+<td>Одинарные кавычки, внутри граница, две буквальные точки, граница;
+каждая граница — одно скалярное значение (§9.3)</td>
+</tr>
+<tr class="odd">
+<td>Разделители</td>
+<td>U+0020, TAB, LF, CR; CRLF — один перевод строки; одиночный CR
+завершает <code>//</code></td>
+</tr>
+<tr class="even">
+<td>Комментарии</td>
+<td><code>//</code> до конца строки и невложенный
+<code>/* ... */</code>; разделяют токены</td>
+</tr>
+<tr class="odd">
+<td>BOM</td>
+<td>Допускается только в начале файла; не является межтокенным
+пробелом</td>
+</tr>
+<tr class="even">
+<td>Составные знаки</td>
+<td>Максимальный токен: <code>!=</code>, <code>==</code>,
+<code>&lt;=</code>, <code>&gt;=</code>, <code>-&gt;</code>,
+<code>&lt;-</code>; разделитель внутри запрещён</td>
+</tr>
+</tbody>
+</table>
+<p>Строковые escape: <code>\"</code>, <code>\\</code>, <code>\n</code>,
+<code>\r</code>, <code>\t</code>, <code>\u{HEX}</code>. В символьных
+литералах также используется <code>\'</code>; двойную кавычку можно
+записать непосредственно. HEX содержит 1–6 ASCII-цифр 0–9, a–f, A–F и
+задаёт скалярное значение не выше U+10FFFF, вне U+D800–U+DFFF.
+Неизвестный escape, буквальный перевод строки и недопустимое значение —
+ошибка чтения исходника. Декодирование однократное. Суррогатные значения
+внутри числового интервала диапазона исключаются; обратный порядок
+границ не меняет множество. Нормализации Unicode нет.</p>
+<p>Имена встроенных типов уже заняты, а имена узлов и datatype находятся
+в общем пространстве. Это проверка объявлений, а не дополнительные
+ключевые слова. <code>type-name</code> — сужение <code>identifier</code>
+в соответствующей позиции, не конкурирующее правило выбора токена
+лексером.</p>
+<h4 id="объявления-и-правила">13.3.2. Объявления и правила</h4>
+<pre class="ebnf"><code>file = { include | node-declaration | datatype-declaration | rule } ;
+include = &quot;include&quot;, string, &quot;;&quot; ;
+node-declaration = kind, type-name, [ data-binding ], [ bases ],
+                   [ declared-children ], ( &quot;;&quot; | node-data-block ) ;
+kind = &quot;abstract&quot;, [ &quot;node&quot; ] | &quot;node&quot; ;
+data-binding = &quot;&lt;&quot;, identifier, &quot;&gt;&quot; ;
+bases = &quot;:&quot;, type-name, { &quot;,&quot;, type-name } ;
+declared-children = &quot;(&quot;, [ declared-child, { &quot;,&quot;, declared-child }, [ &quot;,&quot; ] ], &quot;)&quot; ;
+declared-child = &quot;@&quot;, identifier
+               | [ identifier, &quot;:&quot; ], type-name, [ &quot;?&quot; | &quot;*&quot; ] ;
+datatype-declaration = &quot;datatype&quot;, identifier, [ &quot;:&quot;, identifier ],
+                       ( &quot;;&quot; | datatype-block ) ;
+datatype-block = &quot;{&quot;, { datatype-field }, &quot;}&quot; ;
+datatype-field = ( &quot;javaType&quot; | &quot;default&quot; ), &quot;=&quot;, string, &quot;;&quot;
+               | &quot;parseError&quot;, &quot;=&quot;, ( string | &quot;none&quot; ), &quot;;&quot;
+               | &quot;serialize&quot;, &quot;(&quot;, &quot;value&quot;, &quot;)&quot;, &quot;=&quot;, string, &quot;;&quot;
+               | &quot;parse&quot;, &quot;(&quot;, &quot;text&quot;, &quot;)&quot;, &quot;=&quot;, string, &quot;;&quot;
+               | validation-field ;
+validation-field = &quot;validate&quot;, &quot;(&quot;, &quot;value&quot;, &quot;)&quot;, &quot;=&quot;, string, &quot;;&quot; ;
+node-data-block = &quot;{&quot;, { node-data-field }, &quot;}&quot; ;
+node-data-field = &quot;default&quot;, &quot;=&quot;, string, &quot;;&quot; | validation-field ;
+rule = pattern, &quot;-&gt;&quot;, result, &quot;;&quot; | result, &quot;&lt;-&quot;, pattern, &quot;;&quot; ;</code></pre>
+<p>Состав параметров, их уникальность и полнота с учётом наследования
+проверяются отдельно. Краткая форма datatype не освобождает от
+обязательных итоговых параметров. Базы узлов должны быть абстрактными;
+детям абстрактного типа нужны теги; <code>@tag</code> должен ссылаться
+на унаследованное место. Блок заменяет завершающую <code>;</code>, а не
+дополняет её. Объявления разрешаются независимо от порядка; порядок
+правил и подключений сохраняет смысл §2.6 и §14.</p>
+<h4 id="шаблоны">13.3.3. Шаблоны</h4>
+<pre class="ebnf"><code>pattern = sequence, { &quot;|&quot;, sequence } ;
+sequence = intersection, { &quot;,&quot;, intersection } ;
+intersection = captured-pattern, { &quot;&amp;&quot;, captured-pattern } ;
+captured-pattern = repeated-pattern, [ &quot;as&quot;, identifier ] ;
+repeated-pattern = negated-pattern, [ &quot;?&quot; | &quot;*&quot; | &quot;+&quot; ] ;
+negated-pattern = &quot;!&quot;, negated-pattern | pattern-atom ;
+pattern-atom = typed-pattern | wildcard-pattern
+             | character-pattern | string-pattern | &quot;(&quot;, pattern, &quot;)&quot; ;
+typed-pattern = type-name, [ data-filter ], [ children-check ] ;
+wildcard-pattern = &quot;_&quot;, [ data-filter ], [ positional-check | &quot;(&quot;, &quot;)&quot; ] ;
+character-pattern = ( character | range ), [ data-filter ] ;
+string-pattern = string, [ &quot;&lt;&quot;, data-capture, &quot;&gt;&quot; ] ;
+children-check = positional-check | named-check ;
+positional-check = &quot;[&quot;, [ pattern, [ &quot;,&quot; ] ], &quot;]&quot; ;
+named-check = &quot;(&quot;, [ named-test, { &quot;,&quot;, named-test }, [ &quot;,&quot; ] ], &quot;)&quot; ;
+named-test = identifier, &quot;:&quot;, pattern ;
+data-filter = &quot;&lt;&quot;, ( data-capture | expression, [ &quot;,&quot;, data-capture ] ), &quot;&gt;&quot; ;
+data-capture = capture, [ &quot;+&quot; ] ;</code></pre>
+<p>Позиционная проверка содержит шаблон всей цепочки детей: запятая
+внутри него сохраняет приоритет относительно <code>|</code>. Завершающая
+запятая принадлежит внешнему списку детей; <code>Pair[(A, B,)]</code>
+запрещён. В именованной проверке запятая перед очередным
+<code>tag:</code> разделяет проверки; последовательность в значении тега
+остаётся шаблоном. Пустые <code>[]</code> и <code>()</code> имеют разный
+смысл: отсутствие всех детей и отсутствие дополнительных ограничений на
+детей соответственно.</p>
+<p>Для фильтра точные формы <code>&lt;$x&gt;</code> и
+<code>&lt;$x+&gt;</code> разбираются как захват, а не как
+выражение-условие. В <code>&lt;expression, $x&gt;</code> захват
+относится к исходным данным. Остальные формы проходят обычную проверку
+типов выражений. Пустые <code>&lt;&gt;</code> и завершающая запятая в
+них запрещены.</p>
+<p>У строкового шаблона <code>string</code> должен декодироваться в
+непустую цепочку; после него доступен только захват данных. После
+символа/диапазона допустим обычный фильтр. Проверки детей после строк,
+символов, диапазонов и группировок запрещены. Два списка детей,
+повторные суффиксы и повторные <code>as</code> на одном уровне не
+выводятся из грамматики.</p>
+<p>Статический анализ отдельно проверяет одноузловость отрицания и
+пересечения, положительное минимальное потребление полного правила,
+доступность захватов, невозможность шаблонов, уникальность тегов и
+ограничения повторений. Например, <code>A &amp; B*</code> разбирается,
+но правый операнд не одноузловой; <code>Start, (Identifier as x)*</code>
+разбирается, но обычный захват внутри повторения запрещён.</p>
+<h5 id="обязательные-деревья-разбора-q06">Обязательные деревья разбора
+Q06</h5>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Фрагмент</th>
+<th>Дерево разбора</th>
+<th>Продукции и проверка</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>A \| B as x</code></td>
+<td><code>Alternative(Type(A), Capture(x, Type(B)))</code></td>
+<td><code>pattern → sequence → intersection → captured-pattern</code>;
+<code>as</code> относится только к B; использование x проверяется по
+гарантиям всех веток</td>
+</tr>
+<tr class="even">
+<td><code>(A \| B) as x</code></td>
+<td><code>Capture(x, Group(Alternative(Type(A), Type(B))))</code></td>
+<td><code>captured-pattern → repeated-pattern → negated-pattern → pattern-atom</code>;
+x захватывает узел любой выбранной ветки; его статический тип
+определяется общими правилами альтернатив</td>
+</tr>
+<tr class="odd">
+<td><code>(Identifier as x) as y</code></td>
+<td><code>Capture(y, Group(Capture(x, Type(Identifier))))</code></td>
+<td>Внешний <code>captured-pattern</code> содержит группу с отдельным
+внутренним <code>captured-pattern</code>; x и y обозначают одно
+вхождение</td>
+</tr>
+<tr class="even">
+<td><code>Identifier&lt;$text&gt;[]</code></td>
+<td><code>NodePattern(Identifier, DataCapture(text), Positional([]))</code></td>
+<td><code>typed-pattern → type-name data-filter children-check</code>;
+данные захватываются, фактических детей быть не должно</td>
+</tr>
+</tbody>
+</table>
+<p>Для третьего примера без скобок <code>Identifier as x as y</code> —
+ошибка синтаксиса; <code>(Identifier as x) as x</code> — ошибка
+статической проверки имён. Для четвёртого обратный порядок
+<code>Identifier[]&lt;$text&gt;</code> — ошибка синтаксиса. Узел
+Identifier с данными <code>abc</code> без детей совпадает и даёт
+text=<code>abc</code>; с ребёнком не совпадает. Для первых двух примеров
+синтаксический разбор сам по себе не разрешает подстановку x в
+произвольное место результата: нужны гарантии доступности, типа и
+кратности.</p>
+<h4 id="выражения-данных-1">13.3.4. Выражения данных</h4>
+<pre class="ebnf"><code>expression = logical-and, { &quot;|&quot;, logical-and } ;
+logical-and = equality, { &quot;&amp;&quot;, equality } ;
+equality = ordering, [ ( &quot;==&quot; | &quot;!=&quot; ), ordering ] ;
+ordering = additive, [ ( &quot;&lt;&quot; | &quot;&lt;=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; ), additive ] ;
+additive = unary, { ( &quot;+&quot; | &quot;-&quot; ), unary } ;
+unary = ( &quot;!&quot; | &quot;-&quot; ), unary | postfix ;
+postfix = primary, { &quot;.&quot;, identifier, arguments } ;
+primary = string | integer | &quot;true&quot; | &quot;false&quot; | capture
+        | identifier, arguments | &quot;(&quot;, expression, &quot;)&quot; ;
+arguments = &quot;(&quot;, [ expression, { &quot;,&quot;, expression }, [ &quot;,&quot; ] ], &quot;)&quot; ;</code></pre>
+<p>Сравнение порядка внутри фильтра должно быть защищено круглыми
+скобками (§13.2); незащищённый знак <code>&gt;</code> закрывает фильтр.
+Это контекстное ограничение грамматики выражений, а не попытка лексера
+разбить токен иначе. Например, <code>&lt;(length() &gt;= 3)&gt;</code>
+допустим, <code>&lt;length() &gt; 3&gt;</code> — нет. Цепочки сравнений
+не допускаются: для трёх значений нужны отдельные булевы проверки,
+соединённые <code>&amp;</code>.</p>
+<p>Операции и вызовы типизируются по §10: нет преобразования
+строки/числа/boolean друг в друга по умолчанию. Только отдельный
+строковый литерал в позиции условия (в том числе в скобках, под
+<code>!</code>, <code>&amp;</code>, <code>|</code>) сокращается до
+сравнения с <code>data()</code>. В аргументе, получателе метода,
+конкатенации или сравнении литерал остаётся значением. Поэтому
+<code>!"a".isEmpty()</code> — отрицание вызова на буквальной строке, а
+<code>!"a"</code> — отрицание равенства текущих данных строке
+<code>a</code>. Произвольная строка как условие ошибочна.</p>
+<p>Синтаксическая форма вызова с <code>identifier</code> не разрешает
+произвольные функции: исчерпывающие сигнатуры перечислены ниже.
+<code>capture</code> в выражениях данных должен ссылаться на строковые
+данные, а не на узел или список.</p>
+<h4 id="результат">13.3.5. Результат</h4>
+<pre class="ebnf"><code>result = construction | capture | character | &quot;none&quot; ;
+construction = type-name, [ &quot;&lt;&quot;, expression, &quot;&gt;&quot; ], [ constructed-children ] ;
+constructed-children = positional-construction | named-construction ;
+positional-construction = &quot;[&quot;, [ child-value, { &quot;,&quot;, child-value }, [ &quot;,&quot; ] ], &quot;]&quot; ;
+named-construction = &quot;(&quot;, [ assignment, { &quot;,&quot;, assignment }, [ &quot;,&quot; ] ], &quot;)&quot; ;
+assignment = identifier, &quot;:&quot;, child-value ;
+child-value = child-term, { &quot;+&quot;, child-term } ;
+child-term = construction | capture | character | string | &quot;none&quot; | chars-call ;
+chars-call = &quot;chars&quot;, &quot;(&quot;, expression, [ &quot;,&quot; ], &quot;)&quot; ;</code></pre>
+<p>Самостоятельный <code>capture</code> должен быть обязательным
+одиночным узлом. Диапазон, строка, <code>chars</code> и объединение
+детей не являются самостоятельным результатом. Группировка результата и
+объединения детей запрещена. В <code>&lt;expression&gt;</code>
+конструктора требуется строка, а данные и дети всегда идут после типа
+именно в этом порядке. Теги уникальны внутри каждого конструктора; типы,
+кратности, полнота и однозначность заполнения мест проверяются
+статически. Группы не теряют границ.</p>
+<h4 id="исчерпывающая-таблица-вызовов-q09">13.3.6. Исчерпывающая таблица
+вызовов Q09</h4>
+<p>Обозначения: S — строка, I — целое произвольной точности, B —
+boolean; <code>s:S</code> — любое строковое выражение. В колонках
+вызовов перечислены все аргументы и их типы; их число равно числу
+перечисленных параметров. Методная и свободная явная формы доступны в
+фильтрах и данных результата. Неявная форма доступна только внутри
+фильтра и получает <code>data()</code> текущего узла. Контракты Unicode
+и граничных случаев сохраняются по §10.4.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Метод на s:S</th>
+<th>Свободная явная форма</th>
+<th>Неявная форма в фильтре</th>
+<th>Результат</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>s.length()</code></td>
+<td><code>length(s:S)</code></td>
+<td><code>length()</code></td>
+<td>I</td>
+</tr>
+<tr class="even">
+<td><code>s.isEmpty()</code></td>
+<td><code>isEmpty(s:S)</code></td>
+<td><code>isEmpty()</code></td>
+<td>B</td>
+</tr>
+<tr class="odd">
+<td><code>s.charAt(i:I)</code></td>
+<td><code>charAt(s:S, i:I)</code></td>
+<td><code>charAt(i:I)</code></td>
+<td>S</td>
+</tr>
+<tr class="even">
+<td><code>s.substring(start:I)</code></td>
+<td><code>substring(s:S, start:I)</code></td>
+<td><code>substring(start:I)</code></td>
+<td>S</td>
+</tr>
+<tr class="odd">
+<td><code>s.substring(start:I, end:I)</code></td>
+<td><code>substring(s:S, start:I, end:I)</code></td>
+<td><code>substring(start:I, end:I)</code></td>
+<td>S</td>
+</tr>
+<tr class="even">
+<td><code>s.startsWith(text:S)</code></td>
+<td><code>startsWith(s:S, text:S)</code></td>
+<td><code>startsWith(text:S)</code></td>
+<td>B</td>
+</tr>
+<tr class="odd">
+<td><code>s.endsWith(text:S)</code></td>
+<td><code>endsWith(s:S, text:S)</code></td>
+<td><code>endsWith(text:S)</code></td>
+<td>B</td>
+</tr>
+<tr class="even">
+<td><code>s.contains(text:S)</code></td>
+<td><code>contains(s:S, text:S)</code></td>
+<td><code>contains(text:S)</code></td>
+<td>B</td>
+</tr>
+<tr class="odd">
+<td><code>s.indexOf(text:S)</code></td>
+<td><code>indexOf(s:S, text:S)</code></td>
+<td><code>indexOf(text:S)</code></td>
+<td>I</td>
+</tr>
+<tr class="even">
+<td><code>s.lastIndexOf(text:S)</code></td>
+<td><code>lastIndexOf(s:S, text:S)</code></td>
+<td><code>lastIndexOf(text:S)</code></td>
+<td>I</td>
+</tr>
+<tr class="odd">
+<td><code>s.replace(old:S, new:S)</code></td>
+<td><code>replace(s:S, old:S, new:S)</code></td>
+<td><code>replace(old:S, new:S)</code></td>
+<td>S</td>
+</tr>
+<tr class="even">
+<td><code>s.replaceFirst(old:S, new:S)</code></td>
+<td><code>replaceFirst(s:S, old:S, new:S)</code></td>
+<td><code>replaceFirst(old:S, new:S)</code></td>
+<td>S</td>
+</tr>
+<tr class="odd">
+<td><code>s.trim()</code></td>
+<td><code>trim(s:S)</code></td>
+<td><code>trim()</code></td>
+<td>S</td>
+</tr>
+<tr class="even">
+<td><code>s.trimStart()</code></td>
+<td><code>trimStart(s:S)</code></td>
+<td><code>trimStart()</code></td>
+<td>S</td>
+</tr>
+<tr class="odd">
+<td><code>s.trimEnd()</code></td>
+<td><code>trimEnd(s:S)</code></td>
+<td><code>trimEnd()</code></td>
+<td>S</td>
+</tr>
+<tr class="even">
+<td><code>s.concat(text:S)</code></td>
+<td><code>concat(s:S, text:S)</code></td>
+<td><code>concat(text:S)</code></td>
+<td>S</td>
+</tr>
+<tr class="odd">
+<td><code>s.toLowerCase()</code></td>
+<td><code>toLowerCase(s:S)</code></td>
+<td><code>toLowerCase()</code></td>
+<td>S</td>
+</tr>
+<tr class="even">
+<td><code>s.toUpperCase()</code></td>
+<td><code>toUpperCase(s:S)</code></td>
+<td><code>toUpperCase()</code></td>
+<td>S</td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Особый вызов</th>
+<th>Получатель / аргументы</th>
+<th>Результат</th>
+<th>Контекст</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data()</code></td>
+<td>Текущий узел, 0 аргументов</td>
+<td>S</td>
+<td>Только фильтр этого узла</td>
+</tr>
+<tr class="even">
+<td><code>toString(v)</code></td>
+<td>1 аргумент S, I или B</td>
+<td>S</td>
+<td>Фильтр или данные результата</td>
+</tr>
+<tr class="odd">
+<td><code>v.toString()</code></td>
+<td>Получатель S, I или B; 0 аргументов</td>
+<td>S</td>
+<td>Фильтр или данные результата</td>
+</tr>
+<tr class="even">
+<td><code>chars(s)</code></td>
+<td>1 аргумент S</td>
+<td>Список Character</td>
+<td>Только выражение детей результата</td>
+</tr>
+</tbody>
+</table>
+<p>У <code>substring</code> две формы с двумя аргументами различаются
+типами: <code>(I, I)</code> — неявная строка, <code>(S, I)</code> —
+явная. Неявных преобразований для выбора перегрузки нет. Завершающая
+запятая в непустых аргументах допустима, включая <code>chars(s,)</code>;
+<code>(,)</code> и двойная запятая запрещены. <code>toString()</code>,
+<code>data(s)</code>, <code>s.data()</code> и <code>s.chars()</code> не
+разрешены. Число аргументов, тип получателя, типы аргументов и контекст
+проверяются при компиляции.</p>
+<h5 id="обязательные-примеры-q09">Обязательные примеры Q09</h5>
+<p>При доступных строковых захватах name=<code>ab</code> и
+prefix=<code>pre</code>:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Выражение</th>
+<th>Результат / разбор</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$name.toUpperCase()</code></td>
+<td><code>AB</code>, метод строки</td>
+</tr>
+<tr class="even">
+<td><code>toUpperCase($name)</code></td>
+<td><code>AB</code>, явная свободная форма</td>
+</tr>
+<tr class="odd">
+<td><code>toUpperCase($prefix + $name)</code></td>
+<td><code>PREAB</code>, аргумент — целое строковое выражение</td>
+</tr>
+<tr class="even">
+<td><code>length($name)</code></td>
+<td>Число 2</td>
+</tr>
+<tr class="odd">
+<td><code>toString($name.length())</code></td>
+<td>Строка <code>2</code></td>
+</tr>
+<tr class="even">
+<td><code>$name.length().toString()</code></td>
+<td>Строка <code>2</code>, метод на числовом результате</td>
+</tr>
+</tbody>
+</table>
+<p>Все шесть форм допустимы как выражения в фильтрах и данных
+результата; сам фильтр требует булево условие, а непосредственные данные
+результата — строку. Например,
+<code>Identifier&lt;length($name) == 2&gt;</code> типизирован корректно,
+<code>Identifier&lt;length($name)&gt;</code> — нет;
+<code>Result&lt;length($name)&gt;</code> требует явного
+<code>toString</code>. <code>length(123)</code> ошибочен по типу, а
+<code>$name.length().toString(10)</code> — по числу аргументов.</p>
+<h4 id="контроль-лексики-q08-и-композиции-q10">13.3.7. Контроль лексики
+Q08 и композиции Q10</h4>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Обязательный пример</th>
+<th>Ожидаемое поведение / этап</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Identifier&lt;length() == 01&gt;</code></td>
+<td>Разбор допустим; совпадает с данными длины 1, не 2; десятичное 01
+равно 1</td>
+</tr>
+<tr class="even">
+<td><code>Identifier&lt;length() == +1&gt;</code></td>
+<td>Синтаксическая ошибка: нет унарного плюса</td>
+</tr>
+<tr class="odd">
+<td><code>Identifier&lt;true&gt;</code></td>
+<td>Данные не ограничены, тип Identifier проверяется</td>
+</tr>
+<tr class="even">
+<td><code>node include;</code></td>
+<td>Ошибка компиляции: ключевое слово вместо имени; также не
+соответствует заглавной первой букве</td>
+</tr>
+<tr class="odd">
+<td><code>node Box(value: Node,);</code></td>
+<td>Допустимый непустой список с завершающей запятой</td>
+</tr>
+<tr class="even">
+<td><code>Box[value,]</code></td>
+<td>Ошибка: value без <code>$</code> не является ссылкой на захват и не
+соответствует имени типа узла; сама завершающая запятая допустима</td>
+</tr>
+<tr class="odd">
+<td><code>Box[$value,]</code></td>
+<td>Допустимый синтаксис результата; затем проверяются захват и
+схема</td>
+</tr>
+<tr class="even">
+<td><code>node⟦TAB⟧A;</code></td>
+<td>Допустимое разделение токенов</td>
+</tr>
+<tr class="odd">
+<td><code>node⟦U+00A0⟧A;</code></td>
+<td>Лексическая ошибка</td>
+</tr>
+<tr class="even">
+<td><code>// comment⟦CR⟧node A;</code></td>
+<td>CR завершает комментарий; A объявляется</td>
+</tr>
+<tr class="odd">
+<td><code>Identifier&lt;!"x"&gt;</code></td>
+<td>Отрицание краткой проверки равенства</td>
+</tr>
+<tr class="even">
+<td><code>Identifier&lt;data()!="x"&gt;</code></td>
+<td>Единый токен <code>!=</code>, данные не равны x</td>
+</tr>
+<tr class="odd">
+<td><code>Identifier&lt;data() !/**/= "x"&gt;</code></td>
+<td>Отдельные знаки, синтаксическая ошибка</td>
+</tr>
+<tr class="even">
+<td><code>Pair[Identifier, Number](left: Identifier)</code></td>
+<td>Синтаксическая ошибка: две формы детей</td>
+</tr>
+<tr class="odd">
+<td><code>Pair(left: Identifier)[Identifier, Number]</code></td>
+<td>Та же ошибка при обратном порядке</td>
+</tr>
+<tr class="even">
+<td><code>Pair(left: $a)[$a, $b]</code></td>
+<td>Та же ошибка в результате</td>
+</tr>
+</tbody>
+</table>
+<p>Обозначения ⟦…⟧ обозначают реальные символы тестового входа. Примеры
+независимы и предполагают совместимые объявления и доступные захваты
+там, где проверяется успешное поведение. Совместная проверка детей
+выражается
+<code>Pair[Identifier, Number] &amp; Pair(left: Identifier)</code>; при
+построении выбирается одна форма списка.</p>
+<p>Завершающая запятая разрешена только в непустых списках детей
+объявления/шаблона/результата и аргументов вызова. В базах, фильтрах,
+привязке datatype, данных результата и самостоятельной цепочке шаблонов
+она запрещена. Пустой элемент не появляется ни в одном списке.</p>
 <p><a id="s14"></a></p>
 <h2 id="поиск-и-обход-дерева">14. Поиск и обход дерева</h2>
 <h3 id="правила-и-направление">14.1. Правила и направление</h3>
@@ -3556,63 +4173,16 @@ Bag(items: [Expression+ as xs]) -&gt; Box[$xs]; // Ошибка: список в
 ссылок из других задач; остаётся 33 вопроса. Q07 завершён в задаче #14
 (D380, §10.1.1). Q10 завершён в задаче #14 (D379, §9.2.1); Q06 остаётся
 частично открытым.</p>
-<h3 id="полная-грамматика-и-лексика">18.2. Полная грамматика и
-лексика</h3>
-<ul>
-<li><strong>Q06.</strong> Какова единая EBNF объявлений, шаблонов,
-данных и результатов, включая все допустимые сочетания <code>as</code>,
-суффиксов, фильтров и проверок детей? Нужны точные ограничения
-комбинаций, а не только перечень отдельных конструкций. Порядок фильтра
-данных и проверки детей согласован в D378 (§9.1.1); порядок данных и
-детей в конструкторе результата согласован в D397 (§12.1.1). Группировка
-самостоятельного результата запрещена D398 (§12.1.2). Один as на уровень
-шаблона согласован в D399 (§13.1.2). Порядок кратности и захвата с
-разрешённой явной группировкой согласован в D400 (§13.1.3). Пустая
-именованная проверка детей согласована в D402 (§9.2.3). Позиционная и
-пустая именованная проверки детей у _ согласованы в D403 (§9.2.4);
-непустая именованная проверка у _ запрещена D404 (§9.2.5). Фильтр и
-захват данных у _ согласованы в D405 (§9.2.6). Фильтр и проверка детей
-после группировки запрещены D406 (§13.1.4). Проверка детей после
-строкового шаблона запрещена D407 (§9.5.1). Повтор тегов в именованной
-проверке запрещён D408 (§9.2.7). Повтор тегов в конструкторе запрещён
-D409 (§12.2.1). Фильтры символов и диапазонов согласованы в D410
-(§9.4.1), запрет их списков детей — в D411 (§9.4.2); после строки
-разрешены только захваты данных по D412 (§9.5.2). Остаётся оформить
-единую EBNF и деревья разбора обязательных примеров задачи #14; новых
-вопросов на согласование при текущей сверке не выявлено.</li>
-<li><strong>Q08.</strong> Каковы окончательные числовые и булевы лексемы
-выражений, полный набор ключевых слов и их контекстность? Какие
-пробельные символы разрешены вне строк, как трактуется одиночный CR и
-соседние знаки? Где разрешены завершающие запятые кроме уже
-согласованного списка детей объявления? Ведущие нули согласованы в D381
-(§10.2.1): разрешены, основание остаётся десятичным. Булевы литералы
-true и false согласованы в D382 (§10.2.2). Межтокенные пробелы и
-одиночный CR согласованы в D383 (§2.1.1). Выбор самого длинного токена и
-разрыв составных знаков разделителями согласованы в D384 (§2.3.1).
-Завершающая запятая в списках детей шаблона и результата согласована в
-D385 (§9.2.2). Завершающая запятая в аргументах согласована в D386
-(§10.3.1). Завершающая запятая в &lt;…&gt; запрещена D387 (§10.1.2).
-Завершающая запятая в списке базовых типов запрещена D388 (§3.2.1).
-Завершающая запятая в цепочках шаблонов запрещена D389 (§13.1.1). Полная
-числовая лексема [0-9]+ согласована в D390 (§10.2.3). Восемь
-зарезервированных слов определены D391 (§2.2.1). Контекстность имён
-параметров данных согласована в D392 (§6.2.1). Контекстность имён
-встроенных функций и методов согласована в D393 (§10.3.2). Неразрывность
-$name согласована в D413 (§2.2.2); заглавная первая буква имени типа
-узла — в D414 (§2.2.3). Остаётся итоговая проверка полноты Q08 и
-обязательных лексических примеров.</li>
-<li><strong>Q09.</strong> Какова исчерпывающая таблица разрешённых форм
-вызовов: функции, методы и неявный получатель? Допустим ли
-<code>toString</code> через точку и свободное преобразование регистра
-произвольного выражения, не только захвата? Не следует автоматически
-переносить свободную форму toUpperCase на все методы. Свободное
-преобразование регистра произвольного строкового выражения согласовано в
-D394 (§10.3.3); метод toString() согласован в D395 (§10.3.4). Свободная
-форма всех строковых методов согласована в D396 (§10.3.5). Единственная
-форма chars(s) согласована в D401 (§12.5.1). Для завершения Q09 остаётся
-собрать исчерпывающую таблицу сигнатур и проверить обязательные
-примеры.</li>
-</ul>
+<h3 id="полная-грамматика-и-лексика-завершено-14">18.2. Полная
+грамматика и лексика — завершено (#14)</h3>
+<p>Q06–Q10 закрыты на уровне спецификации. Единая EBNF, деревья разбора
+обязательных примеров, итоговая проверка лексики и полная таблица
+вызовов собраны в <a href="#s13-3">§13.3</a>. Основание — принятые
+D378–D414; редакционная сводка не добавляет новых решений. Q07 раскрыт
+также в §10.1.1, Q10 — в §9.2.1.</p>
+<p>Это завершение проектирования синтаксиса данной группы, а не
+заявление о реализации нового DSL. Остальные группы вопросов ниже
+сохраняются.</p>
 <h3 id="статический-анализ-и-построение">18.3. Статический анализ и
 построение</h3>
 <ul>
