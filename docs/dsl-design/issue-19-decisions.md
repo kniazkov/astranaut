@@ -617,6 +617,25 @@ isSubtypeOf(null) и findCommonBaseType(null) бросают IllegalArgumentExce
 
 Безымянные объявления слотов абстрактного типа остаются недопустимыми по правилам DSL. Универсальность строителя не разрешает обход этого правила; конкретный механизм контроля при использовании строителя ещё не выбран. Имена класса схемы и её строителя пока не закреплены.
 
+### Имена и цепочка API SlotSchema — принято
+
+Закреплены SlotSchema (неизменяемая схема), SlotSchema.Constructor (изменяемый строитель), статический SlotSchema.create() для создания строителя и build() для получения схемы. Методы required, optional и repeated возвращают строитель для цепочки вызовов; каждый имеет варианты с тегом и без него, с аргументами (AbstractType type) и (AbstractType type, String tag).
+
+```java
+SlotSchema schema = SlotSchema.create()
+    .required(expressionType, "head")
+    .repeated(expressionType)
+    .optional(expressionType, "tail")
+    .build();
+
+Set<NamedSlotDescriptor> named = schema.getNamedSlots();
+List<SlotDescriptor> ordered = schema.getSlots();
+```
+
+Именованное повторяющееся место поддерживается: repeated(expressionType, "items"). Прежний запрет тега у REPEATED в ChildDescriptor не переносится. Вариант без тега создаёт безымянное место; отсутствие аргумента тега не означает пропуска места.
+
+Это утверждение API проектируемой модели, не заявление о его реализации. Момент обнаружения повторных тегов и точные проверки аргументов строителя ещё предстоит согласовать.
+
 ## Остальные вопросы
 
 Q36–Q40 остаются открытыми. После согласования синхронизировать журнал, спецификацию Markdown/HTML и список оставшихся вопросов. Сборка старого кода не подтверждает реализацию новых договорённостей.
