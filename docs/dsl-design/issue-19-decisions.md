@@ -204,9 +204,13 @@ public interface Builder {
     boolean setChildren(String tag, List<? extends Node> children);
 
     // Заменяет всё содержимое места одним ребёнком.
-    boolean setChild(int slotIndex, Node child);
+    default boolean setChild(int slotIndex, Node child) {
+        return child != null && setChildren(slotIndex, List.of(child));
+    }
 
-    boolean setChild(String tag, Node child);
+    default boolean setChild(String tag, Node child) {
+        return child != null && setChildren(tag, List.of(child));
+    }
 
     // Проверяет готовность к построению корректного узла.
     boolean isValid();
@@ -268,7 +272,13 @@ first сохраняет прежнего ребёнка; second содержи�
 
 null вместо ребёнка даёт false без изменения состояния и не означает очистку. Проверка null должна выполняться до создания List.of, чтобы не получить исключение от фабрики списка. Неизвестный тег, неверный индекс, null-тег и несовместимый тип также дают false без изменений по общему контракту setter.
 
-Рабочий интерфейс выше обновлён; решение об абстрактных или default-реализациях сокращений пока не принято.
+Рабочий интерфейс выше обновлён; обе перегрузки имеют согласованные default-реализации, приведённые выше.
+
+### Default-реализации setChild — принято
+
+Обе перегрузки setChild реализованы в интерфейсе через default: сначала проверяется child != null, затем вызывается соответствующий setChildren с List.of(child). Это исключает дублирование сокращения в реализациях Builder.
+
+При null-ребёнке возвращается false без вызова setChildren. При ненулевом ребёнке результат и проверки адреса места и совместимости делегируются setChildren. Например, совместимая замена в известном месте успешна; неизвестный тег даёт false по контракту setChildren. Рабочий интерфейс выше обновлён.
 
 ## Остальные вопросы
 
