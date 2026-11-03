@@ -1074,6 +1074,28 @@ Factory.getType(String name) должен возвращать AbstractType, ч�
 
 Предлагаемый эскиз: Optional<AbstractType> getAbstractType(String name); default Optional<Type> getType(String name), фильтрующий результат первого метода через Type.class.isInstance и Type.class.cast. Этот эскиз пока не является отдельно утверждённой сигнатурой.
 
+### Согласованный интерфейс Factory — принято целиком
+
+```java
+public interface Factory {
+    Optional<AbstractType> getAbstractType(String name);
+
+    default Optional<Type> getType(String name) {
+        return getAbstractType(name)
+            .filter(Type.class::isInstance)
+            .map(Type.class::cast);
+    }
+
+    default Optional<Builder> createBuilder(String name) {
+        return getType(name).map(Type::createBuilder);
+    }
+}
+```
+
+Единственный обязательный метод getAbstractType находит любой тип, включая конкретный. getType предоставляет только конкретный Type: абстрактное или неизвестное имя даёт Optional.empty(). createBuilder для конкретного типа каждый раз создаёт новый независимый Builder; для абстрактного или неизвестного типа возвращает Optional.empty().
+
+Все три метода отвергают null в имени с IllegalArgumentException; в default-методах это обеспечивается контрактом getAbstractType. Результаты Optional никогда не null. Автоматического fallback к DraftNode нет. Пользовательские фабрики могут выбирать способ получения типов при соблюдении общего контракта. Предыдущие промежуточные предложения о сигнатурах Factory заменены этим интерфейсом.
+
 ## Остальные вопросы
 
 Q36–Q40 остаются открытыми. После согласования синхронизировать журнал, спецификацию Markdown/HTML и список оставшихся вопросов. Сборка старого кода не подтверждает реализацию новых договорённостей.
